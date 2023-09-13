@@ -1,23 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:image_compare_slider/image_compare_slider.dart';
+import 'package:comparador_de_imagenes/providers.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-void main() => runApp(const MyApp());
+void main() => runApp(const ProviderScope(child: MyApp()));
 
-class MyApp extends StatefulWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    bool isDark = ref.watch(darkModeProvider);
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        brightness: Brightness.dark,
+        brightness: isDark ? Brightness.dark : Brightness.light,
         colorSchemeSeed: Colors.purple,
       ),
       home: const CompareSliderApp(),
@@ -49,10 +47,9 @@ class _CompareSliderAppState extends State<CompareSliderApp> {
   Widget build(BuildContext context) {
     double screenHeight = MediaQuery.of(context).size.height;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Image Compare Slider'),
-        elevation: 10,
-        centerTitle: false,
+      appBar: const PreferredSize(
+        preferredSize: Size.fromHeight(kToolbarHeight),
+        child: AppBarrWidget(),
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -124,6 +121,43 @@ class _CompareSliderAppState extends State<CompareSliderApp> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class AppBarrWidget extends ConsumerWidget {
+  const AppBarrWidget({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    bool switchValue = ref.watch(darkModeProvider);
+
+    return AppBar(
+      title: const Text('Image Compare Slider...'),
+      elevation: 10,
+      centerTitle: false,
+      actions: <Widget>[
+        Switch.adaptive(
+          value: switchValue,
+          onChanged: (value) {
+            switchValue = value;
+            ref.watch(darkModeProvider.notifier).toogleDarkMode();
+          },
+          thumbIcon:
+              MaterialStateProperty.resolveWith((Set<MaterialState> states) {
+            return switchValue
+                ? const Icon(
+                    Icons.sunny,
+                    color: Colors.black,
+                  )
+                : const Icon(Icons.dark_mode_outlined, color: Colors.white);
+          }),
+          activeTrackColor: Colors.yellow[50],
+          inactiveTrackColor: Colors.blue[800],
+          activeColor: Colors.yellow,
+          inactiveThumbColor: Colors.blue,
+        )
+      ],
     );
   }
 }
